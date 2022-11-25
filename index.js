@@ -16,6 +16,7 @@ async function run() {
         const categoriesCollection = client.db('phoneResaleHouse').collection('brandsCategories');
         const allPhoneCollection = client.db('phoneResaleHouse').collection('allPhones');
         const bookingsCollection = client.db('phoneResaleHouse').collection('bookings');
+        const usersCollection = client.db('phoneResaleHouse').collection('users');
 
         //categories
         app.get('/categories', async (req, res) => {
@@ -36,7 +37,22 @@ async function run() {
             const booking = req.body;
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
+        });
+
+        //users
+        app.get('/users', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            res.send(user);
         })
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
     }
     finally {
 
