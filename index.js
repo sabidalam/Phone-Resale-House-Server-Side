@@ -80,12 +80,17 @@ async function run() {
             res.status(403).send({ accessToken: '' });
         });
 
-        app.get('/users', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
-            const user = await usersCollection.findOne(query);
-            res.send(user);
-        })
+        app.get('/users/buyers', async (req, res) => {
+            const query = { accountType: 'User' };
+            const buyer = await usersCollection.find(query).toArray();
+            res.send(buyer);
+        });
+
+        app.get('/users/sellers', async (req, res) => {
+            const query = { accountType: 'Seller' };
+            const seller = await usersCollection.find(query).toArray();
+            res.send(seller);
+        });
 
         app.post('/users', async (req, res) => {
             const user = req.body;
