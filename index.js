@@ -52,12 +52,31 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/productCategory', async (req, res) => {
+            const query = {}
+            const result = await categoriesCollection.find(query).project({ name: 1 }).toArray();
+            res.send(result);
+        })
+
         app.get('/categories/:id', async (req, res) => {
             const id = req.params.id
             const query = { id: id };
             const result = await allPhoneCollection.find(query).toArray();
             res.send(result);
         });
+
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            const result = await allPhoneCollection.insertOne(product);
+            res.send(result);
+        });
+
+        app.get('/products', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const product = await allPhoneCollection.find(query).toArray();
+            res.send(product);
+        })
 
         //bookings
         app.get('/bookings', verifyJWT, async (req, res) => {
@@ -69,7 +88,7 @@ async function run() {
             }
             const bookings = await bookingsCollection.find(query).toArray();
             res.send(bookings);
-        })
+        });
 
 
         app.post('/bookings', async (req, res) => {
