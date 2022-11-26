@@ -56,7 +56,7 @@ async function run() {
             const query = {}
             const result = await categoriesCollection.find(query).project({ name: 1 }).toArray();
             res.send(result);
-        })
+        });
 
         app.get('/categories/:id', async (req, res) => {
             const id = req.params.id
@@ -76,7 +76,14 @@ async function run() {
             const query = { email: email };
             const product = await allPhoneCollection.find(query).toArray();
             res.send(product);
-        })
+        });
+
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await allPhoneCollection.deleteOne(query);
+            res.send(result);
+        });
 
         //bookings
         app.get('/bookings', verifyJWT, async (req, res) => {
@@ -110,13 +117,13 @@ async function run() {
             res.status(403).send({ accessToken: '' });
         });
 
-        app.get('/users/buyers', async (req, res) => {
+        app.get('/users/buyers', verifyJWT, verifyAdmin, async (req, res) => {
             const query = { accountType: 'User' };
             const buyer = await usersCollection.find(query).toArray();
             res.send(buyer);
         });
 
-        app.get('/users/sellers', async (req, res) => {
+        app.get('/users/sellers', verifyJWT, verifyAdmin, async (req, res) => {
             const query = { accountType: 'Seller' };
             const seller = await usersCollection.find(query).toArray();
             res.send(seller);
@@ -149,16 +156,23 @@ async function run() {
             res.send(result);
         });
 
-        app.put('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        app.put('/users/seller/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
-            const filter = { _id: ObjectId(id) }
+            const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
                 $set: {
-                    role: 'admin'
+                    status: 'verified'
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(query);
             res.send(result);
         });
 
