@@ -35,6 +35,7 @@ async function run() {
         const bookingsCollection = client.db('phoneResaleHouse').collection('bookings');
         const usersCollection = client.db('phoneResaleHouse').collection('users');
         const paymentsCollection = client.db('phoneResaleHouse').collection('payments');
+        const reportedItemsCollection = client.db('phoneResaleHouse').collection('reportedItems');
 
 
         const verifyAdmin = async (req, res, next) => {
@@ -109,6 +110,16 @@ async function run() {
 
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
+            const query = {
+                productID: booking.productID,
+                email: booking.email,
+                productName: booking.productName
+            }
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+            if (alreadyBooked.length) {
+                const message = 'You have already booked this product';
+                return res.send({ acknowledged: false, message })
+            }
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         });
@@ -212,10 +223,29 @@ async function run() {
             res.send(result);
         });
 
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        app.get('/reportedItems', verifyJWT, verifyAdmin, async (req, res) => {
+            const query = {};
+            const result = await reportedItemsCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.post('/reportedItems', async (req, res) => {
+            const item = req.body;
+            const result = await reportedItemsCollection.insertOne(item);
+            res.send(result);
+        });
+
+        app.delete('/reportedItems/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await reportedItemsCollection.deleteOne(query);
             res.send(result);
         });
 
