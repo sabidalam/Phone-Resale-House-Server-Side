@@ -204,6 +204,13 @@ async function run() {
             res.send({ isBuyer: user?.accountType === 'User' });
         });
 
+        app.get('/users/verified/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isVerified: user?.status === 'verified' });
+        });
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
