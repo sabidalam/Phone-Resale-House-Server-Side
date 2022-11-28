@@ -81,7 +81,7 @@ async function run() {
             res.send(product);
         });
 
-        app.get('/products/advertised', verifyJWT, async (req, res) => {
+        app.get('/products/advertised', async (req, res) => {
             const query = { advertise: true };
             const result = await allPhoneCollection.find(query).toArray();
             res.send(result);
