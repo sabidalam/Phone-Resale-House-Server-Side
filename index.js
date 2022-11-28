@@ -81,6 +81,25 @@ async function run() {
             res.send(product);
         });
 
+        app.get('/products/advertised', verifyJWT, async (req, res) => {
+            const query = { advertise: true };
+            const result = await allPhoneCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.put('/products/advertise/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    advertise: true
+                }
+            }
+            const result = await allPhoneCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+
         app.delete('/products/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -105,7 +124,7 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const booking = await bookingsCollection.findOne(query);
             res.send(booking);
-        })
+        });
 
 
         app.post('/bookings', async (req, res) => {
@@ -118,46 +137,11 @@ async function run() {
             const alreadyBooked = await bookingsCollection.find(query).toArray();
             if (alreadyBooked.length) {
                 const message = 'You have already booked this product';
-                return res.send({ acknowledged: false, message })
+                return res.send({ acknowledged: false, message });
             }
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         });
-
-        //payment
-        app.post('/create-payment-intent', async (req, res) => {
-            const booking = req.body;
-            const price = booking.price;
-            const amount = price * 100;
-
-            const paymentIntent = await stripe.paymentIntents.create({
-                currency: 'usd',
-                amount: amount,
-                "payment_method_types": [
-                    "card"
-                ]
-            });
-            res.send({
-                clientSecret: paymentIntent.client_secret,
-            });
-
-        });
-
-        app.post('/payments', async (req, res) => {
-            const payment = req.body;
-            const result = await paymentsCollection.insertOne(payment);
-            const id = payment.bookingId;
-            const query = { _id: ObjectId(id) };
-            const updatedDoc = {
-                $set: {
-                    paid: true,
-                    transactionId: payment.transactionId
-                }
-            }
-            const updatedResult = await bookingsCollection.updateOne(query, updatedDoc);
-            res.send(result);
-        });
-
 
         // users
         app.get('/jwt', async (req, res) => {
@@ -237,6 +221,40 @@ async function run() {
             res.send(result);
         });
 
+        //payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+
+        });
+
+        app.post('/payments', verifyJWT, async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const query = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        });
+
         app.get('/reportedItems', verifyJWT, verifyAdmin, async (req, res) => {
             const query = {};
             const result = await reportedItemsCollection.find(query).toArray();
@@ -256,6 +274,7 @@ async function run() {
             res.send(result);
         });
 
+
     }
     finally {
 
@@ -270,4 +289,4 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log(`phone resale house ${port}`);
-})
+});
