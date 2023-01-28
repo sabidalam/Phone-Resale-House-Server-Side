@@ -51,6 +51,12 @@ async function run() {
         //categories
         app.get('/categories', async (req, res) => {
             const query = {};
+            const result = await categoriesCollection.find(query).limit(3).toArray();
+            res.send(result);
+        });
+
+        app.get('/allCategories', async (req, res) => {
+            const query = {};
             const result = await categoriesCollection.find(query).toArray();
             res.send(result);
         });
@@ -127,7 +133,7 @@ async function run() {
         });
 
 
-        app.post('/bookings', async (req, res) => {
+        app.put('/bookings', async (req, res) => {
             const booking = req.body;
             const query = {
                 productID: booking.productID,
@@ -140,7 +146,17 @@ async function run() {
                 return res.send({ acknowledged: false, message });
             }
             const result = await bookingsCollection.insertOne(booking);
-            res.send(result);
+            const id = booking.productID;
+            const find = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    booked: true
+
+                }
+            }
+            const updatedResult = await allPhoneCollection.updateOne(find, updatedDoc, options);
+            res.send((result, updatedResult));
         });
 
         // users
@@ -149,7 +165,7 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '20d' });
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '360d' });
                 return res.send({ accessToken: token });
             }
             res.status(403).send({ accessToken: '' });
